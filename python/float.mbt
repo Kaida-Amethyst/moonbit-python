@@ -35,3 +35,7 @@ pub fn PyFloat::type_name(self: PyFloat) -> String {
 impl IsPyObject for PyFloat with obj(self) {
   self.obj()
 }
+
+pub impl PyAble for PyFloat with to_pyobject(self) -> PyObject {
+  self.obj
+}

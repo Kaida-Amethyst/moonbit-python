@@ -98,7 +98,7 @@ pub impl IsPyObject for PyList with obj(self) {
 }
 
 pub impl PyAble for PyList with to_pyobject(self) -> PyObject {
-  PyObject::create(self.obj_ref())
+  self.obj
 }
 
 pub impl Show for PyList with to_string(self) -> String {

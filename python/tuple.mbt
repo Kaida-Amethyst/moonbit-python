@@ -78,7 +78,7 @@ pub impl IsPyObject for PyTuple with obj(self) -> PyObject {
 }
 
 pub impl PyAble for PyTuple with to_pyobject(self) -> PyObject {
-  PyObject::create(self.obj_ref())
+  self.obj
 }
 
 pub impl Show for PyTuple with to_string(self) -> String {

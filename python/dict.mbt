@@ -75,7 +75,7 @@ pub impl IsPyObject for PyDict with obj(self) {
 }
 
 pub impl PyAble for PyDict with to_pyobject(self) -> PyObject {
-  PyObject::create(self.obj_ref())
+  self.obj
 }
 
 pub impl Show for PyDict with to_string(self) -> String {

@@ -12,7 +12,11 @@ type! MatplotlibError {
   LoadColorMapError
   LoadPylabError
   LoadFuncError(String)
-  // CallFuncError(String)
+  CallFuncError(String)
+} derive(Show)
+
+pub enum Color {
+  Red; Green; Blue; Yellow; Cyan; Magenta; Black; White
 } derive(Show)
 
 pub struct Matplotlib {
@@ -109,28 +113,64 @@ fn get_lib() -> () -> Matplotlib {
   fn () {mlib}
 }
 
-fn unwrap_func(maybe_func: Result[PyFunc, MatplotlibError]) -> PyFunc {
-  match maybe_func {
-    Ok(f) => f
-    Err(e) => {
-      println(e)
-      panic()
-    }
+///| Matplotlib.pyplot.plot
+pub fn plot(
+  xs: Array[Double],
+  ys: Array[Double],
+  color~: Color = Color::Blue,
+  keywords~: Map[String, String] = Map::new()
+) -> Unit!MatplotlibError {
+  guard xs.length() == ys.length() else {
+    raise CallFuncError("plot require same list length")
   }
-}
 
-pub fn plot(xs: PyList, ys: PyList, format~: String = "r") -> Unit{
-  let func = pyplot_get_func?("plot") |> unwrap_func
-  let format = @python.PyString::from(format)
+  let func = pyplot_get_func!("plot")
 
-  let plot_args = PyTuple::from((xs, ys, format))
-  let _ = func.invoke(plot_args)
+  let kwargs = PyDict::new()
+  keywords.each(fn (key, val) { kwargs.set(key, val) })
+
+  kwargs.set("color", color.to_string().to_lower())
+
+  let xs = PyList::from(xs)
+  let ys = PyList::from(ys)
+
+  let plot_args = PyTuple::from((xs, ys))
+  let _ = func.invoke(plot_args, kwargs~)
 
   plot_args.drop()
 }
 
-pub fn xlim(left: Double, right: Double) -> Unit{
-  let func = pyplot_get_func?("xlim") |> unwrap_func
+///| Matplotlib.pyplot.scatter
+pub fn scatter(
+  xs: Array[Double],
+  ys: Array[Double],
+  scale~: Double = 1.0,
+  keywords~: Map[String, String] = Map::new()
+) -> Unit!MatplotlibError {
+
+  guard xs.length() == ys.length() else {
+    raise CallFuncError("plot require same list length")
+  }
+
+  let func = pyplot_get_func!("scatter")
+  let kwargs = PyDict::new()
+  keywords.each(fn (key, val) { kwargs.set(key, val) })
+
+  let scale = @python.PyFloat::new(scale)
+  kwargs.set("s", scale)
+
+  let xs = PyList::from(xs)
+  let ys = PyList::from(ys)
+
+  let plot_args = PyTuple::from((xs, ys))
+  let _ = func.invoke(plot_args, kwargs~)
+  plot_args.drop()
+  kwargs.drop()
+}
+
+///| Matplotlib.pyplot.xlim
+pub fn xlim(left: Double, right: Double) -> Unit!MatplotlibError {
+  let func = pyplot_get_func!("xlim")
 
   let list = PyList::from([left, right])
   let args = PyTuple::new(1) .. set(0, list)
@@ -140,8 +180,9 @@ pub fn xlim(left: Double, right: Double) -> Unit{
   args.drop()
 }
 
-pub fn ylim(left: Double, right: Double) -> Unit {
-  let func = pyplot_get_func?("ylim") |> unwrap_func
+///| Matplotlib.pyplot.ylim
+pub fn ylim(left: Double, right: Double) -> Unit!MatplotlibError {
+  let func = pyplot_get_func!("ylim")
 
   let list = @python.PyList::from([left, right])
   let args = @python.PyTuple::new(1) .. set(0, list)
@@ -151,11 +192,12 @@ pub fn ylim(left: Double, right: Double) -> Unit {
   args.drop()
 }
 
+///| Matplotlib.pyplot.title
 pub fn title(
   title_str: String,
   // keywords~: Map[String, String] = Map::new()
-) -> Unit {
-  let func = pyplot_get_func?("title") |> unwrap_func
+) -> Unit!MatplotlibError {
+  let func = pyplot_get_func!("title")
   let py_str = PyString::from(title_str)
 
   let args = PyTuple::new(1) .. set(0, py_str)
@@ -166,16 +208,16 @@ pub fn title(
 }
 
 
-pub fn show() -> Unit {
-  let func = pyplot_get_func?("show") |> unwrap_func
+pub fn show() -> Unit!Error {
+  let func = pyplot_get_func!("show")
   let _ = func.invoke(PyTuple::new(0))
 }
 
 pub fn save(
   filename: String,
   dpi~: Int = 0
-) -> Unit {
-  let func = pylab_get_func?("save") |> unwrap_func
+) -> Unit!Error {
+  let func = pylab_get_func!("save")
   let py_str = PyString::from(filename)
 
   let args = PyTuple::new(1) .. set(0, py_str)

@@ -46,7 +46,7 @@ pub impl IsPyObject for PyInteger with obj(self) {
 }
 
 pub impl PyAble for PyInteger with to_pyobject(self) -> PyObject {
-  PyObject::create(self.obj_ref())
+  self.obj
 }
 
 pub impl Show for PyInteger with to_string(self) -> String {
