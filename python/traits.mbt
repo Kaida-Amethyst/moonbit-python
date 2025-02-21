@@ -38,6 +38,14 @@ pub impl PyAble for String with to_pyobject(self) -> PyObject {
   PyObject::create(@cpython.py_unicode_from_string(self))
 }
 
+pub impl[T: PyAble] PyAble for Array[T] with to_pyobject(self) {
+  let py_list = PyList::new(size=self.length())
+  for i in 0..<self.length() {
+    py_list.set(i, self[i])
+  }
+  py_list.obj()
+}
+
 pub impl[T0: PyAble, T1: PyAble] PyAble for (T0, T1) with to_pyobject(self) {
   let py_tup = PyTuple::new(2)
   py_tup.set(0, self.0)

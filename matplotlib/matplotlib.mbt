@@ -15,9 +15,26 @@ type! MatplotlibError {
   CallFuncError(String)
 } derive(Show)
 
-pub enum Color {
-  Red; Green; Blue; Yellow; Cyan; Magenta; Black; White
+pub(all) enum Color {
+  Red; Green; Blue; Yellow; Cyan; Magenta; Black; White;
+  CustomHex(UInt); CustomColorName(String)
 } derive(Show)
+
+pub impl Show for Color with to_string(self) {
+  match self {
+    Red => "red"
+    Green => "green"
+    Blue => "blue"
+    Yellow => "yellow"
+    Cyan => "cyan"
+    Magenta => "magenta"
+    Black => "black"
+    White => "white"
+    // Custom(c) => (c & 0xFFFFFF).to_string(radix=16)
+    CustomHex(h) => "#" + (h & 0xFFFFFF).to_string()
+    CustomColorName(s) => s
+  }
+}
 
 pub struct Matplotlib {
   // priv matplotlib: PyModule 
@@ -124,12 +141,16 @@ pub fn plot(
     raise CallFuncError("plot require same list length")
   }
 
+  guard xs.length() > 0 else {
+    raise CallFuncError("plot require non-empty data list")
+  }
+
   let func = pyplot_get_func!("plot")
 
   let kwargs = PyDict::new()
   keywords.each(fn (key, val) { kwargs.set(key, val) })
 
-  kwargs.set("color", color.to_string().to_lower())
+  kwargs.set("color", color.to_string())
 
   let xs = PyList::from(xs)
   let ys = PyList::from(ys)
@@ -145,6 +166,7 @@ pub fn scatter(
   xs: Array[Double],
   ys: Array[Double],
   scale~: Double = 1.0,
+  color~: Color = Color::Blue,
   keywords~: Map[String, String] = Map::new()
 ) -> Unit!MatplotlibError {
 
@@ -152,12 +174,16 @@ pub fn scatter(
     raise CallFuncError("plot require same list length")
   }
 
+  guard xs.length() > 0 else {
+    raise CallFuncError("scatter require non-empty data list")
+  }
+
   let func = pyplot_get_func!("scatter")
   let kwargs = PyDict::new()
   keywords.each(fn (key, val) { kwargs.set(key, val) })
 
-  let scale = @python.PyFloat::new(scale)
   kwargs.set("s", scale)
+  kwargs.set("color", color.to_string())
 
   let xs = PyList::from(xs)
   let ys = PyList::from(ys)
@@ -168,8 +194,65 @@ pub fn scatter(
   kwargs.drop()
 }
 
+///| Matplotlib.pyplot.bar
+pub fn bar(
+  xs: Array[String],
+  heigh: Array[Double],
+  color~ : Color = Color::Blue,
+  keywords~: Map[String, String] = Map::new()
+) -> Unit!MatplotlibError {
+  guard xs.length() == heigh.length() else {
+    raise CallFuncError("plot require same list length")
+  }
+
+  guard xs.length() > 0 else {
+    raise CallFuncError("bar require non-empty data list")
+  }
+
+  let func = pyplot_get_func!("bar")
+  let kwargs = PyDict::new()
+  keywords.each(fn (key, val) { kwargs.set(key, val) })
+
+  kwargs.set("color", color.to_string())
+
+  let xs = PyList::from(xs)
+  let heigh = PyList::from(heigh)
+
+  let plot_args = PyTuple::from((xs, heigh))
+  let _ = func.invoke(plot_args, kwargs~)
+  plot_args.drop()
+  kwargs.drop()
+}
+
+///| Matplotlib.pyplot.pie
+pub fn pie(
+  sizes: Array[Double],
+  labels~: Array[String] = Array::new(),
+  keywords~: Map[String, String] = Map::new()
+) -> Unit!MatplotlibError {
+  guard sizes.length() > 0 else {
+    raise CallFuncError("pie require non-empty data list")
+  }
+
+  let func = pyplot_get_func!("pie")
+  let kwargs = PyDict::new()
+  keywords.each(fn (key, val) { kwargs.set(key, val) })
+
+  let sizes = PyList::from(sizes)
+  if labels.length() > 0 {
+    kwargs.set("labels", labels)
+  }
+
+  let plot_args = PyTuple::from(sizes)
+  let _ = func.invoke(plot_args, kwargs~)
+  plot_args.drop()
+  kwargs.drop()
+}
+
 ///| Matplotlib.pyplot.xlim
-pub fn xlim(left: Double, right: Double) -> Unit!MatplotlibError {
+pub fn xlim(
+  left: Double, right: Double
+) -> Unit!MatplotlibError {
   let func = pyplot_get_func!("xlim")
 
   let list = PyList::from([left, right])

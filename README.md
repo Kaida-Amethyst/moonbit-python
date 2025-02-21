@@ -13,17 +13,16 @@ Moonbit-Python is a CPython-based bridging tool that enables developers to direc
 The following example demonstrates how to use the Matplotlib library in Moonbit to plot a logarithmic function:
 
 ```moonbit
-typealias PyList = @python.PyList
-
-fn main {
-  let x = Array::makei(100, fn (i) {i.to_double()}) 
+fn main_err() -> Unit!Error {
+  let x = Array::makei(100, Int::to_double)
   let y = x.map(@math.ln)
 
-  let x = PyList::from(x)
-  let y = PyList::from(y)
+  @plt.plot!(x, y, color=@plt.Red)
+  @plt.show!()
+}
 
-  @plt.plot(x, y)
-  @plt.show()
+fn main {
+  main_err?() |> println
 }
 ```
 
@@ -92,17 +91,16 @@ Moonbit-Python 是一个基于 CPython 的工具，使开发者能够在 Moonbit
 以下示例展示了如何在 Moonbit 中使用 Matplotlib 库绘制对数函数图像：
 
 ```moonbit
-typealias PyList = @python.PyList
-
-fn main {
-  let x = Array::makei(100, fn (i) {i.to_double()}) 
+fn main_err() -> Unit!Error {
+  let x = Array::makei(100, Int::to_double)
   let y = x.map(@math.ln)
 
-  let x = PyList::from(x)
-  let y = PyList::from(y)
+  @plt.plot!(x, y, color=@plt.Red)
+  @plt.show!()
+}
 
-  @plt.plot(x, y)
-  @plt.show()
+fn main {
+  main_err?() |> println
 }
 ```
 
